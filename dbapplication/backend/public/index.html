@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Database</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            margin: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Student Database</h1>
+
+    <h2>Add Student</h2>
+    <form id="add-student-form">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" required>
+        <button type="submit">Add Student</button>
+    </form>
+
+    <h2>View Students</h2>
+    <button onclick="fetchStudents()">Refresh List</button>
+    <table id="students-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Student records will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById('add-student-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+
+            fetch('/add-student', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, age })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchStudents();
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        function fetchStudents() {
+            fetch('/students')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('students-table').getElementsByTagName('tbody')[0];
+                tableBody.innerHTML = '';
+                data.students.forEach(student => {
+                    const row = tableBody.insertRow();
+                    row.insertCell(0).textContent = student.id;
+                    row.insertCell(1).textContent = student.name;
+                    row.insertCell(2).textContent = student.age;
+                    const actionsCell = row.insertCell(3);
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteStudent(student.id);
+                    actionsCell.appendChild(deleteButton);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function deleteStudent(id) {
+            fetch(`/delete-student/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchStudents();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Fetch students when the page loads
+        fetchStudents();
+    </script>
+</body>
+</html>
